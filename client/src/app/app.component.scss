@@ -1,0 +1,41 @@
+main{
+    width: 80%;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    row-gap: 2rem;
+}
+
+.conversations{
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    column-gap: 3rem;
+}
+
+.conversation{
+    width: 100%;
+    border: 2px solid black;
+    height: 500px;
+}
+
+.conversations_title_list{
+    width: 40%;
+}
+
+.conversation_list{
+    display: flex;
+    flex-direction: column;
+    row-gap: 1rem;
+}
+
+.chat{
+    padding: 3px 1rem;
+}
+
+.input_send{
+    display: flex;
+    flex-direction: row;
+    width: 50%;
+}
+

@@ -24,19 +24,19 @@ public class Agency {
     private String address;
 
     @NonNull
-    @Column(name= "created_at")
-    private LocalDateTime createdAt;
+    @Column(name= "createdat")
+    private LocalDateTime createdat;
 
     @NonNull
     @UpdateTimestamp
-    @Column(name="updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name="updatedat")
+    private LocalDateTime updatedat;
 
-    public Agency(String name, String address, LocalDateTime createdAt, LocalDateTime updatedAt){
+    public Agency(String name, String address, LocalDateTime createdat, LocalDateTime updatedat){
         this.name=name;
         this.address=address;
-        this.createdAt=createdAt;
-        this.updatedAt=updatedAt;
+        this.createdat=createdat;
+        this.updatedat=updatedat;
     }
 
     public Agency(){}

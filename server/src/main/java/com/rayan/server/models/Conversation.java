@@ -16,29 +16,31 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne
     @NonNull
-    @JoinColumn(name="user_id")
+    @JoinColumn(name="customerid")
     private Customer customer;
 
+    @ManyToOne
     @NonNull
-    @JoinColumn(name="user_id")
-    private CustomerService customerService;
+    @JoinColumn(name="customerserviceid")
+    private CustomerServiceModel customerServiceModel;
 
     @NonNull
-    @Column(name= "created_at")
-    private LocalDateTime createdAt;
+    @Column(name= "createdat")
+    private LocalDateTime createdat;
 
     @NonNull
     @UpdateTimestamp
-    @Column(name="updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name="updatedat")
+    private LocalDateTime updatedat;
 
     public Conversation(){}
 
-    public Conversation(Customer customer, CustomerService customerService, LocalDateTime createdAt, LocalDateTime updatedAt){
+    public Conversation(Customer customer, CustomerServiceModel customerServiceModel, LocalDateTime createdat, LocalDateTime updatedat){
         this.customer=customer;
-        this.customerService=customerService;
-        this.createdAt=createdAt;
-        this.updatedAt=updatedAt;
+        this.customerServiceModel = customerServiceModel;
+        this.createdat=createdat;
+        this.updatedat=updatedat;
     }
 }

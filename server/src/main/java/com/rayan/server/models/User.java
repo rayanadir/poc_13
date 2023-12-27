@@ -15,7 +15,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long user_id;
+    private Long id;
 
     @NonNull
     @Column(name = "firstname")
@@ -42,23 +42,23 @@ public class User {
     private String type;
 
     @NonNull
-    @Column(name= "created_at")
-    private LocalDateTime createdAt;
+    @Column(name= "createdat")
+    private LocalDateTime createdat;
 
     @NonNull
     @UpdateTimestamp
-    @Column(name="updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name="updatedat")
+    private LocalDateTime updatedat;
 
-    public User(String firstname, String lastname, String email, String password, LocalDate birthdate, String type, LocalDateTime createdAt, LocalDateTime updatedAt){
+    public User(String firstname, String lastname, String email, String password, LocalDate birthdate, String type, LocalDateTime createdat, LocalDateTime updatedat){
         this.firstname=firstname;
         this.lastname=lastname;
         this.email=email;
         this.password=password;
         this.birthdate=birthdate;
         this.type=type;
-        this.createdAt=createdAt;
-        this.updatedAt=updatedAt;
+        this.createdat=createdat;
+        this.updatedat=updatedat;
     }
 
     public User(){}

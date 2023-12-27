@@ -15,21 +15,33 @@ public class Chat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JoinColumn(name="conversation_id")
+    @ManyToOne
+    @JoinColumn(name="conversationid")
     private Conversation conversation;
 
-    @JoinColumn(name="message_sender_id")
+    @OneToOne
+    @JoinColumn(name="messagesenderid")
     private User user;
 
     @Column(name="message")
     private String message;
 
     @NonNull
-    @Column(name= "created_at")
-    private LocalDateTime createdAt;
+    @Column(name= "createdat")
+    private LocalDateTime createdat;
 
     @NonNull
     @UpdateTimestamp
-    @Column(name="updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name="updatedat")
+    private LocalDateTime updatedat;
+
+    public Chat(){}
+
+    public Chat(Conversation conversation, User user, String message, LocalDateTime createdat, LocalDateTime updatedat){
+        this.conversation=conversation;
+        this.user=user;
+        this.message=message;
+        this.createdat=createdat;
+        this.updatedat=updatedat;
+    }
 }

@@ -60,7 +60,9 @@ public class ConversationController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createConversation(@RequestBody NewConversationRequest request){
-        Conversation conversation = new Conversation(request.getCustomer(),request.getCustomerServiceModel(), LocalDateTime.now(),LocalDateTime.now());
+        Customer customer = this.customerService.findCustomerById(request.getCustomerId());
+        CustomerServiceModel customerServiceModel = this.customerServiceService.findCustomerServiceById(request.getCustomerServiceModelId());
+        Conversation conversation = new Conversation(customer,customerServiceModel, LocalDateTime.now(),LocalDateTime.now());
         this.conversationService.createConversation(conversation);
         return ResponseEntity.ok().body(conversation);
     }

@@ -36,5 +36,4 @@ public class ConversationService {
     public List<Conversation> findAllConversationsCustomerService(CustomerServiceModel customerServiceModel){
         return this.conversationRepository.findByCustomerServiceModel(customerServiceModel);
     }
-
 }

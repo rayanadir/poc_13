@@ -19,4 +19,9 @@ public interface ConversationRepository extends JpaRepository<Conversation, Long
      * Find all conversations while logged as customer service user
      */
     List<Conversation> findByCustomerServiceModel(CustomerServiceModel customerServiceModel);
+
+    /**
+     * Check if customer has conversation with customer service
+     */
+    Conversation findByCustomerAndCustomerServiceModel(Customer customer, CustomerServiceModel customerServiceModel);
 }

@@ -32,7 +32,7 @@ public class ChatController {
 
     @PostMapping()
     public ResponseEntity<?> sendChatMessage(@RequestBody NewChatRequest request){
-        Conversation conversation = this.conversationService.findConversationById(request.getConversation().getId());
+        Conversation conversation = this.conversationService.findConversationById(request.getConversationid());
         Chat chat = new Chat(conversation,request.getUser(), request.getMessage(), LocalDateTime.now(), LocalDateTime.now());
         this.chatService.sendChatMessage(chat);
         return ResponseEntity.ok().body(chat);

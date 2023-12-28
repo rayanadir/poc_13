@@ -1,21 +1,37 @@
 <main>
   
   <header class="users">
-    <h1>Users : </h1>
-    <div class="users_list">
+    <h1 *ngIf="!loggedUser">Users : </h1>
+    <div *ngIf="!loggedUser" class="users_list">
       <p>Select user</p>
       <button *ngFor="let user of users" (click)="selectUser(user.id)">{{user.firstname}} {{user.lastname}} (id:{{user.id}})</button>
     </div>
-    <p>Logged as user : {{displayLoggedUser}} </p>
+    <p *ngIf="loggedUser">Logged as user : {{displayLoggedUser}} </p>
+    <button *ngIf="loggedUser" (click)="logout()">logout</button>
   </header>
 
-  <section class="conversations">
+  <section *ngIf="loggedUser" class="conversations">
     <div class="conversations_title_list">
       <h2 style="margin-top: 0;">Conversations list</h2>
-      <div class="conversation_list">
-        <article *ngFor="let conversation of conversations" class="article_conversation" (click)="selectConversation(conversation.id)">
-          <p class="users_conversation_name">{{interlocutor}}</p>
-          <!--Get last message sent-->          
+      <hr style="width: 100%;">
+      <div *ngIf="loggedUser?.type=='customer'">
+        <div class="buttons">
+          <button *ngIf="!showCustomerServiceListUser" (click)="getAllCustomerServiceUsers()">New conversation</button>
+          <button *ngIf="!showConversationsList" (click)="cancel()">Cancel</button>
+        </div>
+        <div *ngIf="showCustomerServiceListUser && !showConversationsList" class="customer_service_users">
+          <h3>Customer service users list</h3>
+          <article class="article_conversation" *ngFor="let customer_service_user of customerServiceUsers" (click)="selectCustomerServiceUser(customer_service_user)">
+            <p>{{customer_service_user.customerservice?.firstname}} {{customer_service_user.customerservice?.lastname}}</p>
+          </article>
+        </div>
+      </div>
+      
+      <div *ngIf="!showCustomerServiceListUser && showConversationsList" class="conversation_list">
+        <article *ngFor="let conversation of conversations" class="article_conversation" [ngClass]="currentConversation?.id === conversation.id ? 'active' : ''" (click)="selectConversation(conversation.id)">
+          <p class="users_conversation_name">
+            {{conversation.interlocutor}}
+          </p>          
         </article>
       </div>
       
@@ -23,18 +39,21 @@
   
     <div class="conversation">
       <div *ngIf="selectedChat">
+        <p style="padding: 3px 1rem; cursor: pointer;" (click)="back()">BACK</p>
+        <h4 style="padding: 3px 1rem;">{{currentConversation?.interlocutor}}</h4>
+        <hr style="width: 100%;">
         <article *ngFor="let message of chat" class="chat">
-          <i>{{message.user?.firstname}} {{message.user?.lastname}} {{message.createdat}}</i>
+          <i>{{message.user?.firstname}} {{message.user?.lastname}} {{message.user?.id === loggedUser.id ? "You" : ""}} {{message.createdat}}</i>
           <p style="margin: 0;">{{message.message}}</p>
         </article>
-        <p *ngIf="chat?.length===0">No messages</p>
+        <p *ngIf="chat?.length===0" style="padding: 0 1rem;">No messages yet with {{currentConversation?.interlocutor}}</p>
       </div>
     </div>
   </section>
   
-  <form *ngIf="selectedChat" (ngSubmit)="sendChatMessage()" class="input_send">
+  <form *ngIf="selectedChat && loggedUser" (ngSubmit)="sendChatMessage()" class="input_send">
     <input type="text" [value]="chatInput" (input)="change($event)" />
-    <button type="submit">send</button>
+    <button type="submit" [disabled]="chatInput.length===0">send</button>
   </form>
 
 </main>

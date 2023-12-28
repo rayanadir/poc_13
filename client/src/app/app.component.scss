@@ -23,7 +23,11 @@ main{
     width: 40%;
 }
 
-.conversation_list{
+.buttons{
+    margin-bottom: 1rem;
+}
+
+.conversation_list, .customer_service_users{
     display: flex;
     flex-direction: column;
     row-gap: 1rem;
@@ -31,6 +35,12 @@ main{
 
 .article_conversation{
     cursor: pointer;
+    border: 1px solid;
+    padding: 0 1rem;
+}
+
+.active{
+    background-color: #d5f0f3;
 }
 
 .chat{

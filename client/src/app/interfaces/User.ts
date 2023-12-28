@@ -11,6 +11,6 @@ export interface User{
     type:string,
     createdat?:Date,
     updatedat?:Date,
-    customer?:Customer,
+    customer?:Customer | undefined,
     customer_service?:CustomerService,
 }

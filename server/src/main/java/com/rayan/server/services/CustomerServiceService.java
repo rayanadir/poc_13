@@ -21,6 +21,10 @@ public class CustomerServiceService {
     @Autowired
     private UserRepository userRepository;
 
+    public CustomerServiceModel findCustomerServiceById(Long id){
+        return this.customerServiceRepository.findById(id).orElse(null);
+    }
+
     public CustomerServiceModel findByCustomerService(User user){
         return this.customerServiceRepository.findByCustomerservice(user);
     }

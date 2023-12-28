@@ -1,8 +1,8 @@
 export interface UserObject{
     firstname:string,
     lastname:string,
-    id:number | undefined, 
-    type:string,
-    customerid?:number | undefined,
-    customerserviceid?:number | undefined,
+    id:number, 
+    type:string |undefined,
+    customerid?:number,
+    customerserviceid?:number,
 }

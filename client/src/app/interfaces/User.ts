@@ -7,10 +7,10 @@ export interface User{
     lastname:string,
     email:string,
     password:string,
-    birthdate:Date,
+    birthdate:Date | undefined,
     type:string,
     createdat?:Date,
     updatedat?:Date,
-    customer:Customer,
-    customer_service:CustomerService,
+    customer?:Customer,
+    customer_service?:CustomerService,
 }

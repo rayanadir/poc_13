@@ -4,7 +4,7 @@ import { User } from "./User";
 export interface Chat{
     id?:number,
     conversation:Conversation,
-    user:User,
+    user:User | undefined,
     message:string,
     createdat?:Date,
     updatedat?:Date,

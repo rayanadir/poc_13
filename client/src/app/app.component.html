@@ -13,7 +13,7 @@
     <div class="conversations_title_list">
       <h2 style="margin-top: 0;">Conversations list</h2>
       <div class="conversation_list">
-        <article *ngFor="let conversation of conversations">
+        <article *ngFor="let conversation of conversations" class="article_conversation" (click)="selectConversation(conversation.id)">
           <p class="users_conversation_name">{{interlocutor}}</p>
           <!--Get last message sent-->          
         </article>
@@ -22,17 +22,19 @@
     </div>
   
     <div class="conversation">
-      <article *ngFor="let message of chat" class="chat">
-        <i>{{message.user.firstname}} {{message.user.lastname}} {{message.createdat}}</i>
-        <p style="margin: 0;">{{message.message}}</p>
-      </article>
+      <div *ngIf="selectedChat">
+        <article *ngFor="let message of chat" class="chat">
+          <i>{{message.user?.firstname}} {{message.user?.lastname}} {{message.createdat}}</i>
+          <p style="margin: 0;">{{message.message}}</p>
+        </article>
+        <p *ngIf="chat?.length===0">No messages</p>
+      </div>
     </div>
   </section>
   
-  
-  <div class="input_send">
-    <textarea type="text"></textarea>
-    <button>send</button>
-  </div>
+  <form *ngIf="selectedChat" (ngSubmit)="sendChatMessage()" class="input_send">
+    <input type="text" [value]="chatInput" (input)="change($event)" />
+    <button type="submit">send</button>
+  </form>
 
 </main>

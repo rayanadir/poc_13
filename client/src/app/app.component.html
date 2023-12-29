@@ -43,7 +43,7 @@
         <h4 style="padding: 3px 1rem;">{{currentConversation?.interlocutor}}</h4>
         <hr style="width: 100%;">
         <article *ngFor="let message of chat" class="chat">
-          <i>{{message.user?.firstname}} {{message.user?.lastname}} {{message.user?.id === loggedUser.id ? "You" : ""}} {{message.createdat}}</i>
+          <i>{{message.user?.firstname}} {{message.user?.lastname}} {{message.user?.id === loggedUser.id ? "(You)" : ""}} {{message.createdat}}</i>
           <p style="margin: 0;">{{message.message}}</p>
         </article>
         <p *ngIf="chat?.length===0" style="padding: 0 1rem;">No messages yet with {{currentConversation?.interlocutor}}</p>

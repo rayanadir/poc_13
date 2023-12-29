@@ -10,6 +10,10 @@ import { CustomerService } from './interfaces/CustomerService';
 import { ConversationRequest } from './interfaces/ConversationRequest';
 import { Customer } from './interfaces/Customer';
 import { Subscription } from 'rxjs';
+import { UsersService } from './services/users/users.service';
+import { CustomerServiceService } from './services/customer_service/customer-service.service';
+import { ConversationsService } from './services/conversations/conversations.service';
+import { ChatService } from './services/chat/chat.service';
 
 @Component({
   selector: 'app-root',
@@ -46,7 +50,12 @@ export class AppComponent implements OnDestroy {
     createConversationSubscription!: Subscription;
     sendMessageSubscription!: Subscription;
 
-    constructor(private http: HttpClient, public fb: FormBuilder){
+    constructor(
+      private usersService: UsersService,
+      private customerServiceService: CustomerServiceService,
+      private conversationsService: ConversationsService,
+      private chatService: ChatService,
+      ){
       
       // check if user saved in session storage
       this.userObject = JSON.parse(sessionStorage.getItem("userObject")!)
@@ -60,7 +69,7 @@ export class AppComponent implements OnDestroy {
       } 
       
       // get all users
-      this.usersSubscription = this.http.get<User[]>(this.api_url+"/user").subscribe((response: User[]) => {
+      this.usersSubscription = this.usersService.getAll().subscribe((response: User[]) => {
         this.users=response;
       })
     }
@@ -99,7 +108,7 @@ export class AppComponent implements OnDestroy {
     getAllCustomerServiceUsers(): void{
       this.showCustomerServiceListUser=true;
       this.showConversationsList=false;
-      this.allCustomerServiceUsers = this.http.get<CustomerService[]>(`${this.api_url}/customer_service`).subscribe((customer_service_users: CustomerService[]) => {
+      this.allCustomerServiceUsers = this.customerServiceService.getAll().subscribe((customer_service_users: CustomerService[]) => {
         this.customerServiceUsers=customer_service_users;
       });
     }
@@ -137,7 +146,7 @@ export class AppComponent implements OnDestroy {
 
     selectUser(id:number): void{
       this.userObject=undefined; this.customerObject=undefined; this.customerServiceObject=undefined, this.loggedUser=undefined
-      this.selectUserSubscription = this.http.get<UserResponse>(`${this.api_url}/user/${id}`).subscribe((response: UserResponse) => {
+      this.selectUserSubscription = this.usersService.get(id).subscribe((response: UserResponse) => {
         const userType=response.user.type;
         if(userType==="customer"){
           const userResponse = response.user
@@ -173,7 +182,7 @@ export class AppComponent implements OnDestroy {
     }
 
     findUserConversations(id:number | undefined):void{
-      this.usersConversations = this.http.get<Conversation[]>(`${this.api_url}/conversations/${this.loggedUser?.type}/${id}`).subscribe((conversations: Conversation[]) => {
+      this.usersConversations = this.conversationsService.getAllByCustomer(id!).subscribe((conversations: Conversation[]) => {
         this.conversations=conversations.map((conversation) => {
           let interlocutor!:string;
           // get interlocutor name
@@ -187,7 +196,7 @@ export class AppComponent implements OnDestroy {
 
     selectConversation(id:number): void{
         this.clearConversation();
-        this.selectConversationSubscription = this.http.get<Conversation>(`${this.api_url}/conversations/${id}`).subscribe((conversation: Conversation) => {
+        this.selectConversationSubscription = this.conversationsService.getConversation(id).subscribe((conversation: Conversation) => {
           this.currentConversation=conversation;
           let interlocutor!:string;
           this.loggedUser?.type == "customer" ?
@@ -207,7 +216,7 @@ export class AppComponent implements OnDestroy {
     }
 
     getConversationMessages(id:number | undefined):void{
-      this.getConversationMessagesSubscription = this.http.get<Chat[]>(`${this.api_url}/chat/${id}`).subscribe((messages: Chat[]) => {
+      this.getConversationMessagesSubscription = this.chatService.get(id!).subscribe((messages: Chat[]) => {
         this.chat=messages;
         this.selectedChat=true;
       })
@@ -215,7 +224,7 @@ export class AppComponent implements OnDestroy {
 
     createConversation(conversationRequest: ConversationRequest):void{
       this.clearConversation();
-      this.createConversationSubscription = this.http.post<Conversation>(`${this.api_url}/conversations/create`, conversationRequest).subscribe((conversation: Conversation) => {
+      this.createConversationSubscription = this.conversationsService.createConversation(conversationRequest).subscribe((conversation: Conversation) => {
         this.currentConversation=conversation;
         this.getConversationMessages(this.currentConversation.id)
       });
@@ -236,7 +245,7 @@ export class AppComponent implements OnDestroy {
         user: this.userObject,
         message: this.chatInput
       }
-      this.sendMessageSubscription = this.http.post<Chat>(`${this.api_url}/chat`, request).subscribe((response: Chat) => { 
+      this.sendMessageSubscription = this.chatService.send(request).subscribe((response: Chat) => { 
         this.chat=[...this.chat!,response]
         this.chatInput="";
       })

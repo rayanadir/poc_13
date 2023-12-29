@@ -58,6 +58,26 @@ public class ConversationController {
         return ResponseEntity.ok().body(list);
     }
 
+    /**
+     * Get all user conversations by its id
+     * @param id
+     * @return
+     */
+    @GetMapping("/all/{id}")
+    public ResponseEntity<?> getAllConversations(@PathVariable("id") Long id){
+        User user = this.userService.findUserById(id);
+        if(user.getType().equals("customer")){
+            Customer customer = this.customerService.findCustomerByUser(user);
+            List<Conversation> list = this.conversationService.findAllConversationsCustomer(customer);
+            return ResponseEntity.ok().body(list);
+        }else if(user.getType().equals("customer_service")){
+            CustomerServiceModel customerServiceModel = this.customerServiceService.findByCustomerService(user);
+            List<Conversation> list= this.conversationService.findAllConversationsCustomerService(customerServiceModel);
+            return ResponseEntity.ok().body(list);
+        }
+        return ResponseEntity.badRequest().build();
+    }
+
     @PostMapping("/create")
     public ResponseEntity<?> createConversation(@RequestBody NewConversationRequest request){
         Customer customer = this.customerService.findCustomerById(request.getCustomerId());

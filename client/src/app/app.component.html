@@ -21,7 +21,7 @@
         </div>
         <div *ngIf="showCustomerServiceListUser && !showConversationsList" class="customer_service_users">
           <h3>Customer service users list</h3>
-          <article class="article_conversation" *ngFor="let customer_service_user of customerServiceUsers" (click)="selectCustomerServiceUser(customer_service_user)">
+          <article class="article_conversation" *ngFor="let customer_service_user of customerServiceUsers" [ngClass]="selectedCustomerServiceUser?.customerserviceid === customer_service_user.customerserviceid ? 'active' : ''" (click)="selectCustomerServiceUserSocket(customer_service_user)">
             <p>{{customer_service_user.customerservice?.firstname}} {{customer_service_user.customerservice?.lastname}}</p>
           </article>
         </div>
@@ -34,26 +34,33 @@
           </p>          
         </article>
       </div>
-      
     </div>
   
     <div class="conversation">
       <div *ngIf="selectedChat">
-        <p style="padding: 3px 1rem; cursor: pointer;" (click)="back()">BACK</p>
-        <h4 style="padding: 3px 1rem;">{{currentConversation?.interlocutor}}</h4>
-        <hr style="width: 100%;">
-        <article *ngFor="let message of chat" class="chat">
-          <i>{{message.user?.firstname}} {{message.user?.lastname}} {{message.user?.id === loggedUser.id ? "(You)" : ""}} {{message.createdat}}</i>
-          <p style="margin: 0;">{{message.message}}</p>
-        </article>
-        <p *ngIf="chat?.length===0" style="padding: 0 1rem;">No messages yet with {{currentConversation?.interlocutor}}</p>
+        <p *ngIf="getConversationLoading">LOADING ...</p>
+        <div *ngIf="!getConversationLoading" class="conversation_wrap">
+          <div class="conversation_header">
+            <p style="padding: 0 1rem; cursor: pointer; margin-bottom: 0;" (click)="back()">BACK</p>
+            <h4 style="padding: 3px 1rem; margin-top: 6px;">{{currentConversation?.interlocutor}}</h4>
+            <hr style="width: 100%;">
+          </div>
+          <div *ngIf="chat?.length!==0" class="messages_list" id="messages_list" >
+            <article *ngFor="let message of chat" class="chat" >
+              <i>{{message.user?.firstname}} {{message.user?.lastname}} {{message.user?.id === loggedUser.id ? "(You)" : ""}} {{convertDateToString(message.createdat)}} </i>
+              <p style="margin: 0;">{{message.message}}</p>
+            </article>
+          </div>
+          <p *ngIf="chat?.length===0 && !getConversationLoading" style="padding: 0 1rem;">No messages yet with {{currentConversation?.interlocutor}}</p>
+        </div>
       </div>
     </div>
   </section>
   
-  <form *ngIf="selectedChat && loggedUser" (ngSubmit)="sendChatMessage()" class="input_send">
+  <form *ngIf="selectedChat && loggedUser" (ngSubmit)="sendMessage()" class="input_send">
     <input type="text" [value]="chatInput" (input)="change($event)" />
     <button type="submit" [disabled]="chatInput.length===0">send</button>
+    <p *ngIf="sendMessageLoading">SENDING ...</p>
   </form>
 
 </main>

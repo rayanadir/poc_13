@@ -13,7 +13,7 @@ export class ConversationsService {
 
   constructor(private http: HttpClient) { }
 
-  public getAllByCustomer(id:number): Observable<Conversation[]>{
+  public getAllConversations(id:number): Observable<Conversation[]>{
     return this.http.get<Conversation[]>(`${this.path}/conversations/all/${id}`);
   }
 

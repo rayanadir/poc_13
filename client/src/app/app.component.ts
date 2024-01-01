@@ -44,13 +44,11 @@ export class AppComponent implements OnInit,OnDestroy {
     selectedCustomerServiceUser: CustomerService | undefined;
 
     usersSubscription!: Subscription;
-    allCustomerServiceUsers!: Subscription;
     selectUserSubscription!: Subscription;
     usersConversations!: Subscription;
     selectConversationSubscription!: Subscription;
     getConversationMessagesSubscription!: Subscription;
     createConversationSubscription!: Subscription;
-    sendMessageSubscription!: Subscription;
 
     socket: any = null;
     stompClient: any= null;
@@ -231,13 +229,16 @@ export class AppComponent implements OnInit,OnDestroy {
     ngOnDestroy(): void {
       // UNSUBSCRIBE
       this.usersSubscription.unsubscribe();
-      this.allCustomerServiceUsers.unsubscribe();
       this.selectUserSubscription.unsubscribe();
       this.usersConversations.unsubscribe();
       this.selectConversationSubscription.unsubscribe();
       this.getConversationMessagesSubscription.unsubscribe();
       this.createConversationSubscription.unsubscribe();
-      this.sendMessageSubscription.unsubscribe();
+	  this.stompClient.unsubscribe(`/topic/getMessages/${this.currentConversationId}`);
+      this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+      this.stompClient.unsubscribe(`/topic/single_conversation/${this.currentConversationId}`);
+      this.stompClient.unsubscribe(`/topic/get_all_customer_service_users`);
+      this.stompClient.disconnect();
     }
 
     logout(): void{
@@ -245,7 +246,6 @@ export class AppComponent implements OnInit,OnDestroy {
         this.stompClient.unsubscribe(`/topic/getMessages/${this.currentConversationId}`);
         this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
         this.stompClient.unsubscribe(`/topic/single_conversation/${this.currentConversationId}`);
-        //this.stompClient.unsubscribe(`/topic/get_all_conversations/${this.loggedUser?.type}/${this.loggedUser?.customer?.customerid || this.loggedUser?.customer_service?.customerserviceid}`);
         this.stompClient.unsubscribe(`/topic/get_all_customer_service_users`);
         this.stompClient.disconnect();
       }
@@ -337,7 +337,6 @@ export class AppComponent implements OnInit,OnDestroy {
     }
 
     findUserConversations(id:number | undefined):void{
-      const userid = this.loggedUser?.type ==="customer" ? this.loggedUser.customer?.customerid : this.loggedUser?.type ==="customer_service" ? this.loggedUser.customer_service?.customerserviceid : undefined;
       this.usersConversations = this.conversationsService.getAllConversations(id!).subscribe((conversations: Conversation[]) => {
         this.conversations=conversations.map((conversation) => {
           let interlocutor!:string;
@@ -392,14 +391,6 @@ export class AppComponent implements OnInit,OnDestroy {
         this.currentConversation.interlocutor=interlocutor;
         sessionStorage.setItem("currentConversation",JSON.stringify(this.currentConversation));
       })
-    }
-
-    createConversation(conversationRequest: ConversationRequest):void{
-      this.clearConversation();
-      this.createConversationSubscription = this.conversationsService.createConversation(conversationRequest).subscribe((conversation: Conversation) => {
-        this.currentConversation=conversation;
-        this.getConversationMessages(this.currentConversation.id)
-      });
     }
 
     convertDateToString(date:Date | undefined):string | undefined{

@@ -10,6 +10,9 @@ import com.rayan.server.services.CustomerServiceService;
 import com.rayan.server.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Controller
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -48,5 +52,12 @@ public class UserController {
     public ResponseEntity<?> getAllUsers(){
         List<User> users = this.userService.findAllUsers();
         return ResponseEntity.ok().body(users);
+    }
+
+    @MessageMapping("/get_customer_service_users")
+    @SendTo("/topic/get_all_customer_service_users")
+    public List<CustomerServiceModel> getAllCustomerServiceUsers(){
+        List<CustomerServiceModel> list = this.customerServiceService.findAllCustomerService();
+        return list;
     }
 }

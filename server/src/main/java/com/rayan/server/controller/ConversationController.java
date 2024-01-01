@@ -5,18 +5,19 @@ import com.rayan.server.models.Customer;
 import com.rayan.server.models.CustomerServiceModel;
 import com.rayan.server.models.User;
 import com.rayan.server.payload.request.NewConversationRequest;
-import com.rayan.server.services.ConversationService;
-import com.rayan.server.services.CustomerService;
-import com.rayan.server.services.CustomerServiceService;
-import com.rayan.server.services.UserService;
+import com.rayan.server.services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-
+@Controller
 @RestController
 @RequestMapping("/api/conversations")
 public class ConversationController {
@@ -31,6 +32,7 @@ public class ConversationController {
 
     @Autowired
     private CustomerServiceService customerServiceService;
+
 
     /**
      * Get all customer conversations by its user id
@@ -64,7 +66,7 @@ public class ConversationController {
      * @return
      */
     @GetMapping("/all/{id}")
-    public ResponseEntity<?> getAllConversations(@PathVariable("id") Long id){
+    public ResponseEntity<?> getAllConversationsHttp(@PathVariable("id") Long id){
         User user = this.userService.findUserById(id);
         if(user.getType().equals("customer")){
             Customer customer = this.customerService.findCustomerByUser(user);
@@ -92,4 +94,39 @@ public class ConversationController {
         Conversation conversation = this.conversationService.findConversationById(id);
         return ResponseEntity.ok().body(conversation);
     }
+
+    /*@MessageMapping("/get_conversation/{conversationId}")
+    @SendTo("/topic/single_conversation/{conversationId}")
+    public Conversation getSingleConversation(@Payload @DestinationVariable Long conversationId){
+        Conversation conversation = this.conversationService.findConversationById(conversationId);
+        return conversation;
+    }
+
+    @MessageMapping("/get_all_conversations/customer")
+    public List<Conversation> getAllConversationsCustomerSocket(Long id) {
+        Customer customer = this.customerService.findCustomerById(id);
+        List<Conversation> list = this.conversationService.findAllConversationsCustomer(customer);
+        this.template.convertAndSend("/topic/get_all_conversations/customer/"+id, list);
+        return list;
+    }
+
+    @MessageMapping("/get_all_conversations/customer_service")
+    @SendTo("/topic/get_all_conversations/customer_service/{userid}")
+    public List<Conversation> getAllConversationsCustomerServiceSocket(Long id) {
+        CustomerServiceModel customerServiceModel = this.customerServiceService.findCustomerServiceById(id);
+        List<Conversation> list= this.conversationService.findAllConversationsCustomerService(customerServiceModel);
+        this.template.convertAndSend("/topic/get_all_conversations/customer/"+id, list);
+        return list;
+    }*/
+
+    @MessageMapping("/create_conversation")
+    @SendTo("/topic/new_conversation")
+    public Conversation createConversationSocket(@Payload NewConversationRequest request){
+        Customer customer = this.customerService.findCustomerById(request.getCustomerId());
+        CustomerServiceModel customerServiceModel = this.customerServiceService.findCustomerServiceById(request.getCustomerServiceModelId());
+        Conversation conversation = new Conversation(customer,customerServiceModel, LocalDateTime.now(),LocalDateTime.now());
+        this.conversationService.createConversation(conversation);
+        return conversation;
+    }
+
 }

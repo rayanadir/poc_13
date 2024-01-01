@@ -29,8 +29,6 @@ public class ChatController {
     @Autowired
     private ConversationService conversationService;
 
-    @Autowired
-    private WebSocketService webSocketService;
 
 
     @GetMapping("/{id}")

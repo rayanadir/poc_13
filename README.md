@@ -2,18 +2,19 @@
 
 
 ## Database setup
-Go inside folder:
+Go to folder:
 
-> cd resources
-Run script in script.sql
+> `cd resources`
+
+Run script in `script.sql`
 
 
 ## Start the project
 
 ### Front
-Go inside folder:
+Go to folder:
 
-> cd client
+> `cd client`
 
 Install dependencies:
 
@@ -26,9 +27,9 @@ Launch Front-end:
 
 
 ### Back
-Go inside folder:
+Go to folder:
 
-> cd server
+> `cd server`
 
  Install maven dependencies:
 

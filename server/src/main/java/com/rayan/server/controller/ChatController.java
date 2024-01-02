@@ -38,14 +38,6 @@ public class ChatController {
         return ResponseEntity.ok().body(chatList);
     }
 
-    @PostMapping()
-    public ResponseEntity<?> sendChatMessageHttp(@RequestBody NewChatRequest request){
-        Conversation conversation = this.conversationService.findConversationById(request.getConversationid());
-        Chat chat = new Chat(conversation,request.getUser(), request.getMessage(), LocalDateTime.now(), LocalDateTime.now());
-        this.chatService.sendChatMessage(chat);
-        return ResponseEntity.ok().body(chat);
-    }
-
     @MessageMapping("/get_chat_messages/{conversationId}")
     @SendTo("/topic/getMessages/{conversationId}")
     public List<Chat> getChatMessagesSocket(@Payload @DestinationVariable Long conversationId){
@@ -60,9 +52,9 @@ public class ChatController {
         Conversation conversation = this.conversationService.findConversationById(conversationId);
         Chat chat = new Chat(conversation,messageRequest.getUser(), messageRequest.getMessage(), LocalDateTime.now(), LocalDateTime.now());
         this.chatService.sendChatMessage(chat);
+        conversation.setUpdatedat(LocalDateTime.now());
+        this.conversationService.updateConversation(conversationId, conversation);
         return chat;
     }
-
-
 
 }

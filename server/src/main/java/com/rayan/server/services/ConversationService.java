@@ -19,6 +19,11 @@ public class ConversationService {
         return this.conversationRepository.save(conversation);
     }
 
+    public Conversation updateConversation(Long id, Conversation conversation){
+        conversation.setId(id);
+        return this.conversationRepository.save(conversation);
+    }
+
     public Conversation findConversationById(Long id){
         return this.conversationRepository.findById(id).orElse(null);
     }

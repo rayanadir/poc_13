@@ -28,10 +28,4 @@ public class ChatService {
         return this.chatRepository.save(chat);
     }
 
-    /**
-     * Get last chat conversation message sent
-     */
-    /*public Chat getLastChatConversationMessage(Long id){
-        return this.chatRepository.findBy
-    }*/
 }

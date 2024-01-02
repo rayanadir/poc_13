@@ -80,7 +80,8 @@ export class AppComponent implements OnInit,OnDestroy {
     connect(): void{ 
       this.socket = new SockJS("http://localhost:8080/socket");
       this.stompClient= Stomp.over(this.socket);
-      this.stompClient.connect({},(frame:any) => {this.connectionSuccess()});
+      this.stompClient.connect({},(frame:any) => {this.connectionSuccess(); console.log(frame);
+      });
     }
 
     connectionSuccess(): void{
@@ -89,9 +90,17 @@ export class AppComponent implements OnInit,OnDestroy {
         this.selectConversation(this.currentConversation.id);
       }
 
+      //this.stompClient.subscribe(`/topic/message_sent/${this.currentConversationId}`, (callback:any) => {this.onConversationNewMessageSent(callback.body)});
+
       this.stompClient.subscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/new_private_conversation/${this.loggedUser?.type}`, (callback:any) => {
         this.onNewPrivateConversation(callback.body);
       })
+
+      if(this.loggedUser?.type==="customer"){
+        this.stompClient.subscribe(`/topic/get_all_customer_service_users`, (callback: any) => {this.onGetAllCustomerServiceUsers(callback.body);})
+      }
+      
+
     }
 
     sendMessage(): void {
@@ -188,7 +197,7 @@ export class AppComponent implements OnInit,OnDestroy {
 
     getAllCustomerServiceUsers(){
       this.showCustomerServiceListUser=true;
-      this.stompClient.subscribe(`/topic/get_all_customer_service_users`, (callback: any) => {this.onGetAllCustomerServiceUsers(callback.body);})
+      
       if(this.stompClient){
         this.stompClient.send(`/app/get_customer_service_users`);
       }else{
@@ -258,7 +267,7 @@ export class AppComponent implements OnInit,OnDestroy {
     clearConversation():void{
       this.currentConversationId!=undefined;
       this.selectedChat=false; 
-      this.currentConversation=undefined
+      this.currentConversation=undefined;
     }
 
     change(event:any):void{
@@ -318,10 +327,10 @@ export class AppComponent implements OnInit,OnDestroy {
 
     selectConversation(id:number): void{
       if(this.currentConversationId!==id){
-        if(this.socket && this.stompClient && this.currentConversationId){
+        //if(this.socket && this.stompClient && this.currentConversationId){
           this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
           this.clearConversation();
-        } 
+        //} 
         this.selectedChat=true;
         this.currentConversationId=id;
         this.stompClient.subscribe(`/topic/message_sent/${id}`, (callback:any) => {this.onConversationNewMessageSent(callback.body)});

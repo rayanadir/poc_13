@@ -11,7 +11,8 @@ import com.rayan.server.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,6 +33,9 @@ public class UserController {
 
     @Autowired
     private CustomerServiceService customerServiceService;
+
+    @Autowired
+    private SimpMessagingTemplate template;
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getUser(@PathVariable("id") Long id){
@@ -54,10 +58,10 @@ public class UserController {
         return ResponseEntity.ok().body(users);
     }
 
-    @MessageMapping("/get_customer_service_users")
-    @SendTo("/topic/get_all_customer_service_users")
-    public List<CustomerServiceModel> getAllCustomerServiceUsers(){
+    @MessageMapping("/get_all_customer_service_users")
+    public List<CustomerServiceModel> getAllCustomerServiceUsersTest(@Payload Long customerId){
         List<CustomerServiceModel> list = this.customerServiceService.findAllCustomerService();
+        this.template.convertAndSendToUser(customerId.toString(),"/get_all_customer_service_users", list);
         return list;
     }
 }

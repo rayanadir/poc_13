@@ -12,6 +12,7 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,7 +30,8 @@ public class ChatController {
     @Autowired
     private ConversationService conversationService;
 
-
+    @Autowired
+    private SimpMessagingTemplate template;
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getChatMessages(@PathVariable Long id){
@@ -57,4 +59,23 @@ public class ChatController {
         return chat;
     }
 
+    @MessageMapping("/sendNewMessage")
+    public Chat sendNewMessageSocket(@Payload NewChatRequest messageRequest){
+        Conversation conversation = this.conversationService.findConversationById(messageRequest.getConversationid());
+        Chat chat = new Chat(conversation,messageRequest.getUser(), messageRequest.getMessage(), LocalDateTime.now(), LocalDateTime.now());
+        this.chatService.sendChatMessage(chat);
+        conversation.setUpdatedat(LocalDateTime.now());
+        this.conversationService.updateConversation(messageRequest.getConversationid(), conversation);
+        this.template.convertAndSendToUser(
+                conversation.getCustomer().getCustomerid().toString(),
+                "/conversation/customer/"+messageRequest.getConversationid().toString(),
+                chat
+        );
+        this.template.convertAndSendToUser(
+                conversation.getCustomerServiceModel().getCustomerserviceid().toString(),
+                "/conversation/customer_service/"+messageRequest.getConversationid().toString(),
+                chat
+        );
+        return chat;
+    }
 }

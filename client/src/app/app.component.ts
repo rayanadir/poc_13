@@ -90,7 +90,11 @@ export class AppComponent implements OnInit,OnDestroy {
         this.selectConversation(this.currentConversation.id);
       }
 
-      //this.stompClient.subscribe(`/topic/message_sent/${this.currentConversationId}`, (callback:any) => {this.onConversationNewMessageSent(callback.body)});
+      this.stompClient.subscribe(`/topic/message_sent/${this.currentConversationId}`, (callback:any) => {this.onConversationNewMessageSent(callback.body)});
+
+      /*this.stompClient.subscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.loggedUser?.type}/${this.currentConversationId}`, (callback:any) => {
+        this.onConversationNewMessageSent(callback.body)
+      })*/
 
       this.stompClient.subscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/new_private_conversation/${this.loggedUser?.type}`, (callback:any) => {
         this.onNewPrivateConversation(callback.body);
@@ -111,6 +115,7 @@ export class AppComponent implements OnInit,OnDestroy {
           message: this.chatInput
         };
         this.stompClient.send(`/app/sendMessage/${request.conversationid}`, {}, JSON.stringify(request));
+        //this.stompClient.send(`/app/sendNewMessage`, {}, JSON.stringify(request));
         this.chatInput="";
         this.sendMessageLoading=true;
       }else{
@@ -184,12 +189,13 @@ export class AppComponent implements OnInit,OnDestroy {
       if(this.stompClient){
         if(this.socket && this.currentConversationId){
           this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+          //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.loggedUser?.type}/${this.currentConversationId}`);
           this.currentConversationId=undefined;
           this.currentConversation=undefined;
           this.chat=undefined;
         } 
         this.stompClient.send(`/app/create_private_conversation`, {}, JSON.stringify(conversationRequest));
-
+        
       }else{
         console.log("error: no stomp client");
       }
@@ -216,7 +222,9 @@ export class AppComponent implements OnInit,OnDestroy {
       this.selectConversationSubscription.unsubscribe();
       this.getConversationMessagesSubscription.unsubscribe();
       this.createConversationSubscription.unsubscribe();
-      this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+      //this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+      this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.currentConversationId}/${this.loggedUser?.type}`);
+
       this.stompClient.unsubscribe(`/topic/get_all_customer_service_users`);
       this.stompClient.disconnect();
     }
@@ -224,6 +232,7 @@ export class AppComponent implements OnInit,OnDestroy {
     logout(): void{
       if(this.stompClient!==null){
         this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+        //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.currentConversationId}/${this.loggedUser?.type}`);
         this.stompClient.unsubscribe(`/topic/get_all_customer_service_users`);
         this.stompClient.disconnect();
       }
@@ -256,6 +265,8 @@ export class AppComponent implements OnInit,OnDestroy {
     back():void{
       if(this.socket && this.stompClient && this.currentConversationId){
         this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+        //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.currentConversationId}/${this.loggedUser?.type}`);
+
       } 
       this.currentConversationId=undefined;
       this.currentConversation=undefined
@@ -276,7 +287,9 @@ export class AppComponent implements OnInit,OnDestroy {
 
     selectUser(id:number): void{
       this.userObject=undefined; this.customerObject=undefined; this.customerServiceObject=undefined, this.loggedUser=undefined;
-      if(this.socket && this.stompClient){this.stompClient!.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);}
+      if(this.socket && this.stompClient){
+        this.stompClient!.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+      }
       this.selectUserSubscription = this.usersService.get(id).subscribe((response: UserResponse) => {
         const userType=response.user.type;
         if(userType==="customer"){
@@ -329,11 +342,15 @@ export class AppComponent implements OnInit,OnDestroy {
       if(this.currentConversationId!==id){
         //if(this.socket && this.stompClient && this.currentConversationId){
           this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+          //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.loggedUser?.type}/${this.currentConversationId}`);
           this.clearConversation();
         //} 
         this.selectedChat=true;
         this.currentConversationId=id;
         this.stompClient.subscribe(`/topic/message_sent/${id}`, (callback:any) => {this.onConversationNewMessageSent(callback.body)});
+        /*this.stompClient.subscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.loggedUser?.type}/${this.currentConversationId}`, (callback:any) => {
+          this.onConversationNewMessageSent(callback.body)
+        })*/
         this.getCurrentConversation(id);
         this.getConversationMessages(id);
       }

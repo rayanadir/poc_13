@@ -56,6 +56,9 @@ export class AppComponent implements OnInit,OnDestroy {
     getConversationLoading:boolean=true;
     sendMessageLoading:boolean=false;
 
+    currentConversationSocketSubscription!: any;
+    getAllCustomerServiceUsersSocketSubscription!: any;
+    newConversationSubscription!: any;
 
     constructor(
       private usersService: UsersService,
@@ -74,144 +77,13 @@ export class AppComponent implements OnInit,OnDestroy {
       this.usersSubscription = this.usersService.getAll().subscribe((response: User[]) => {
         this.users=response;
       })
-    }
-
-
-    connect(): void{ 
-      this.socket = new SockJS("http://localhost:8080/socket");
-      this.stompClient= Stomp.over(this.socket);
-      this.stompClient.connect({},(frame:any) => {this.connectionSuccess(); console.log(frame);
-      });
-    }
-
-    connectionSuccess(): void{
-      this.currentConversation=JSON.parse(sessionStorage.getItem("currentConversation")!);
-      if(this.currentConversation){
-        this.selectConversation(this.currentConversation.id);
-      }
-
-      this.stompClient.subscribe(`/topic/message_sent/${this.currentConversationId}`, (callback:any) => {this.onConversationNewMessageSent(callback.body)});
-
-      /*this.stompClient.subscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.loggedUser?.type}/${this.currentConversationId}`, (callback:any) => {
-        this.onConversationNewMessageSent(callback.body)
-      })*/
-
-      this.stompClient.subscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/new_private_conversation/${this.loggedUser?.type}`, (callback:any) => {
-        this.onNewPrivateConversation(callback.body);
-      })
-
-      if(this.loggedUser?.type==="customer"){
-        this.stompClient.subscribe(`/topic/get_all_customer_service_users`, (callback: any) => {this.onGetAllCustomerServiceUsers(callback.body);})
-      }
-      
-
-    }
-
-    sendMessage(): void {
-      if(this.stompClient){
-        let request: ChatRequest = {
-          conversationid: this.currentConversationId,
-          user: this.userObject,
-          message: this.chatInput
-        };
-        this.stompClient.send(`/app/sendMessage/${request.conversationid}`, {}, JSON.stringify(request));
-        //this.stompClient.send(`/app/sendNewMessage`, {}, JSON.stringify(request));
-        this.chatInput="";
-        this.sendMessageLoading=true;
-      }else{
-        console.log("error: no stomp client");
-      }
-    }
-
-
-    onNewPrivateConversation(payload:any): void{
-      let conversation: Conversation = JSON.parse(payload);
-      if(this.loggedUser?.type==="customer"){
-        let interlocutor=`${conversation.customerServiceModel.customerservice?.firstname} ${conversation.customerServiceModel.customerservice?.lastname}`;
-        conversation = {...conversation,interlocutor}
-        this.conversations=[conversation,...this.conversations!].sort((a,b) => {return new Date(b.updatedat).getTime() - new Date(a.updatedat).getTime()});;
-        this.selectedChat=true;
-        this.getConversationLoading=false;
-        this.selectConversation(conversation.id);
-      }else if(this.loggedUser?.type==="customer_service"){
-        let interlocutor=`${conversation.customer.customer?.firstname} ${conversation.customer.customer?.lastname}`;
-        conversation= {...conversation,interlocutor}
-        this.conversations=[conversation,...this.conversations!];
-      }
-    }
-
-    onConversationNewMessageSent(payload: any): void{
-      const message: Chat = JSON.parse(payload);
-      this.chat=[...this.chat!, message];
-      this.sendMessageLoading=false;
-      this.scrollToBottom(200, "smooth");
-      let conv = this.conversations?.filter((c) => c.id!==this.currentConversationId);
-      this.conversations=[this.currentConversation!,...conv!];
-    }
-
-    onGetAllCustomerServiceUsers(payload:any): void{
-      const customer_service_users: CustomerService[]= JSON.parse(payload);
-      this.customerServiceUsers=customer_service_users;
-      this.showConversationsList=false;
-    }
-
-    selectCustomerServiceUserSocket(customer_service_user:CustomerService): void{
-      if(this.selectedCustomerServiceUser!==customer_service_user){
-        if(this.stompClient){
-          const customer= this.customerObject;
-          const customer_service= customer_service_user;
-          this.selectedCustomerServiceUser=customer_service;
-          // Get all customer conversations and get all his customer service id's interlocutors
-          const conversationsCustomerServiceId = this.conversations?.map((conversation) => {
-            const conversationObj = {
-              conversationid:conversation.id,
-              customerserviceid: conversation.customerServiceModel.customerserviceid,
-              customerid: conversation.customer.customerid
-            }
-            return conversationObj;
-          });
-          // check if a conversation contains customer_id & customer_service_id, check if conversation exists
-          const isExistingConversation = conversationsCustomerServiceId?.find((conv) => conv.customerserviceid==customer_service.customerserviceid && conv.customerid==customer?.customerid);
-          if(isExistingConversation){
-            this.selectConversation(isExistingConversation.conversationid!)
-          }else{
-            const conversationRequest: ConversationRequest = {
-              customerId: customer?.customerid,
-              customerServiceModelId: customer_service.customerserviceid, 
-            }
-            this.createConversationSocket(conversationRequest)
-          }
-        }
-      }
-    }
-
-    createConversationSocket(conversationRequest: ConversationRequest): void{
-      if(this.stompClient){
-        if(this.socket && this.currentConversationId){
-          this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
-          //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.loggedUser?.type}/${this.currentConversationId}`);
-          this.currentConversationId=undefined;
-          this.currentConversation=undefined;
-          this.chat=undefined;
-        } 
-        this.stompClient.send(`/app/create_private_conversation`, {}, JSON.stringify(conversationRequest));
-        
-      }else{
-        console.log("error: no stomp client");
-      }
-    }
-
-    getAllCustomerServiceUsers(){
-      this.showCustomerServiceListUser=true;
-      
-      if(this.stompClient){
-        this.stompClient.send(`/app/get_customer_service_users`);
-      }else{
-        console.log("error: no stomp client");
-      }
+      this.currentConversationSocketSubscription?.unsubscribe();
+      this.stompClient?.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
     }
 
     ngOnInit(): void{
+      this.currentConversationSocketSubscription?.unsubscribe();
+      this.stompClient?.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
     }
 
     ngOnDestroy(): void {
@@ -222,72 +94,17 @@ export class AppComponent implements OnInit,OnDestroy {
       this.selectConversationSubscription.unsubscribe();
       this.getConversationMessagesSubscription.unsubscribe();
       this.createConversationSubscription.unsubscribe();
-      //this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
-      this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.currentConversationId}/${this.loggedUser?.type}`);
-
-      this.stompClient.unsubscribe(`/topic/get_all_customer_service_users`);
+      this.currentConversationSocketSubscription?.unsubscribe();
+      this.getAllCustomerServiceUsersSocketSubscription?.unsubscribe()
+      this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+      this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid}/get_all_customer_service_users`);
       this.stompClient.disconnect();
-    }
-
-    logout(): void{
-      if(this.stompClient!==null){
-        this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
-        //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.currentConversationId}/${this.loggedUser?.type}`);
-        this.stompClient.unsubscribe(`/topic/get_all_customer_service_users`);
-        this.stompClient.disconnect();
-      }
-      sessionStorage.removeItem("userObject");
-      sessionStorage.removeItem("customerObject");
-      sessionStorage.removeItem("customerServiceObject");
-      sessionStorage.removeItem("loggedUser");
-      sessionStorage.removeItem("currentConversation")
-      this.userObject=undefined; 
-      this.customerObject=undefined; 
-      this.customerServiceObject=undefined; 
-      this.loggedUser=undefined;
-      this.conversations=undefined;
-      this.currentConversation=undefined
-      this.chat=undefined;
-      this.customerServiceUsers=undefined;
-      this.selectedChat=false;
-      this.displayLoggedUser="";
-      this.currentConversationId=undefined;
-      this.selectedCustomerServiceUser=undefined;
-    }
-
-    cancel():void{
-      this.showConversationsList=true;
-      this.selectedCustomerServiceUser=undefined;
-      this.stompClient.unsubscribe(`/topic/get_all_customer_service_users`);
-      this.showCustomerServiceListUser=false;
-    }
-
-    back():void{
-      if(this.socket && this.stompClient && this.currentConversationId){
-        this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
-        //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.currentConversationId}/${this.loggedUser?.type}`);
-
-      } 
-      this.currentConversationId=undefined;
-      this.currentConversation=undefined
-      this.chat=undefined;
-      this.selectedChat=false;
-      sessionStorage.removeItem("currentConversation");
-    }
-
-    clearConversation():void{
-      this.currentConversationId!=undefined;
-      this.selectedChat=false; 
-      this.currentConversation=undefined;
-    }
-
-    change(event:any):void{
-      this.chatInput=event.target.value
     }
 
     selectUser(id:number): void{
       this.userObject=undefined; this.customerObject=undefined; this.customerServiceObject=undefined, this.loggedUser=undefined;
       if(this.socket && this.stompClient){
+        this.currentConversationSocketSubscription?.unsubscribe();
         this.stompClient!.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
       }
       this.selectUserSubscription = this.usersService.get(id).subscribe((response: UserResponse) => {
@@ -325,6 +142,153 @@ export class AppComponent implements OnInit,OnDestroy {
       })
     }
 
+    connect(): void{ 
+      this.socket = new SockJS("http://localhost:8080/socket");
+      this.stompClient= Stomp.over(this.socket);
+      this.stompClient.connect({},(frame:any) => {this.connectionSuccess();});
+    }
+
+    connectionSuccess(): void{
+      this.currentConversation=JSON.parse(sessionStorage.getItem("currentConversation")!);
+      if(this.currentConversation){
+        this.selectConversation(this.currentConversation.id);
+      }
+        
+      this.newConversationSubscription = this.stompClient.subscribe(
+        `/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/new_private_conversation/${this.loggedUser?.type}`, 
+        (callback:any) => {
+        this.onNewPrivateConversation(callback.body);
+      },
+      {id: `/new_conversation/${this.loggedUser?.type}/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}`}
+      )
+
+    }
+
+    onNewPrivateConversation(payload:any): void{
+      let conversation: Conversation = JSON.parse(payload);
+      if(this.loggedUser?.type==="customer"){
+        let interlocutor=`${conversation.customerServiceModel.customerservice?.firstname} ${conversation.customerServiceModel.customerservice?.lastname}`;
+        conversation = {...conversation,interlocutor}
+        this.conversations=[conversation,...this.conversations!].sort((a,b) => {return new Date(b.updatedat).getTime() - new Date(a.updatedat).getTime()});;
+        this.selectedChat=true;
+        this.getConversationLoading=false;
+        this.selectConversation(conversation.id);
+      }else if(this.loggedUser?.type==="customer_service"){
+        let interlocutor=`${conversation.customer.customer?.firstname} ${conversation.customer.customer?.lastname}`;
+        conversation= {...conversation,interlocutor}
+        this.conversations=[conversation,...this.conversations!];
+      }
+      //this.newConversationSubscription.unsubscribe();
+    }
+
+    onConversationNewMessageSent(payload: any): void{
+      const message: Chat = JSON.parse(payload);
+      this.chat=[...this.chat!, message];
+      this.sendMessageLoading=false;
+      this.scrollToBottom(200, "smooth");
+      let conv = this.conversations?.filter((c) => c.id!==this.currentConversationId);
+      this.conversations=[this.currentConversation!,...conv!];
+    }
+
+    onGetAllCustomerServiceUsers(payload:any): void{
+      const customer_service_users: CustomerService[]= JSON.parse(payload);
+      this.customerServiceUsers=customer_service_users;
+      this.showConversationsList=false;
+    }
+
+
+    sendMessage(): void {
+      if(this.stompClient){
+        let request: ChatRequest = {
+          conversationid: this.currentConversationId,
+          user: this.userObject,
+          message: this.chatInput
+        };
+        this.stompClient.send(`/app/sendMessage/${request.conversationid}`, {}, JSON.stringify(request));
+        this.chatInput="";
+        this.sendMessageLoading=true;
+      }else{
+        console.log("error: no stomp client");
+      }
+    }
+
+    selectCustomerServiceUserSocket(customer_service_user:CustomerService): void{
+      if(this.selectedCustomerServiceUser!==customer_service_user){
+        if(this.stompClient){
+          const customer= this.customerObject;
+          const customer_service= customer_service_user;
+          this.selectedCustomerServiceUser=customer_service;
+          // Get all customer conversations and get all his customer service id's interlocutors
+          const conversationsCustomerServiceId = this.conversations?.map((conversation) => {
+            const conversationObj = {
+              conversationid:conversation.id,
+              customerserviceid: conversation.customerServiceModel.customerserviceid,
+              customerid: conversation.customer.customerid
+            }
+            return conversationObj;
+          });
+          // check if a conversation contains customer_id & customer_service_id, check if conversation exists
+          const isExistingConversation = conversationsCustomerServiceId?.find((conv) => conv.customerserviceid==customer_service.customerserviceid && conv.customerid==customer?.customerid);
+          if(isExistingConversation){
+            this.selectConversation(isExistingConversation.conversationid!)
+          }else{
+            const conversationRequest: ConversationRequest = {
+              customerId: customer?.customerid,
+              customerServiceModelId: customer_service.customerserviceid, 
+            }
+            this.createConversationSocket(conversationRequest)
+          }
+        }
+      }
+    }
+
+    selectConversation(id:number): void{
+      if(this.currentConversationId!==id){
+        this.currentConversationSocketSubscription?.unsubscribe();
+        this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+        this.clearConversation();
+        this.selectedChat=true;
+        this.currentConversationId=id;
+        this.currentConversationSocketSubscription = this.stompClient.subscribe(
+          `/topic/message_sent/${id}`,
+          (callback:any) => {this.onConversationNewMessageSent(callback.body)},
+          {id: `/topic/message_sent/${this.currentConversationId}`});
+        this.getCurrentConversation(id);
+        this.getConversationMessages(id);
+      }
+    }
+
+    createConversationSocket(conversationRequest: ConversationRequest): void{
+      if(this.stompClient){
+        if(this.socket && this.currentConversationId){
+          this.currentConversationSocketSubscription?.unsubscribe();
+          this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+          this.currentConversationId=undefined;
+          this.currentConversation=undefined;
+          this.chat=undefined;
+        } 
+        this.stompClient.send(`/app/create_private_conversation`, {}, JSON.stringify(conversationRequest));
+        
+      }else{
+        console.log("error: no stomp client");
+      }
+    }
+
+    getAllCustomerServiceUsers(){
+      this.showCustomerServiceListUser=true;
+      this.getAllCustomerServiceUsersSocketSubscription = this.stompClient.subscribe(
+        `/user/${this.customerObject?.customerid}/get_all_customer_service_users`,
+        (callback: any) => {this.onGetAllCustomerServiceUsers(callback.body);},
+        {id: `/user/${this.customerObject?.customerid}/get_all_customer_service_users`}
+      )
+      if(this.stompClient){
+        const customerId = this.customerObject?.customerid;
+        this.stompClient.send(`/app/get_all_customer_service_users`, {}, JSON.stringify(customerId));
+      }else{
+        console.log("error: no stomp client");
+      }
+    }
+
     findUserConversations(id:number | undefined):void{
       this.usersConversations = this.conversationsService.getAllConversations(id!).subscribe((conversations: Conversation[]) => {
         this.conversations=conversations.map((conversation) => {
@@ -338,23 +302,7 @@ export class AppComponent implements OnInit,OnDestroy {
       });
     }
 
-    selectConversation(id:number): void{
-      if(this.currentConversationId!==id){
-        //if(this.socket && this.stompClient && this.currentConversationId){
-          this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
-          //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.loggedUser?.type}/${this.currentConversationId}`);
-          this.clearConversation();
-        //} 
-        this.selectedChat=true;
-        this.currentConversationId=id;
-        this.stompClient.subscribe(`/topic/message_sent/${id}`, (callback:any) => {this.onConversationNewMessageSent(callback.body)});
-        /*this.stompClient.subscribe(`/user/${this.customerObject?.customerid || this.customerServiceObject?.customerserviceid}/conversation/${this.loggedUser?.type}/${this.currentConversationId}`, (callback:any) => {
-          this.onConversationNewMessageSent(callback.body)
-        })*/
-        this.getCurrentConversation(id);
-        this.getConversationMessages(id);
-      }
-    }
+    
 
     getConversationMessages(id:number | undefined):void{
       this.getConversationMessagesSubscription = this.chatService.get(id!).subscribe((messages: Chat[]) => {
@@ -377,6 +325,65 @@ export class AppComponent implements OnInit,OnDestroy {
         sessionStorage.setItem("currentConversation",JSON.stringify(this.currentConversation));
       })
     }
+
+    logout(): void{
+      if(this.stompClient!==null){
+        this.currentConversationSocketSubscription?.unsubscribe();
+        this.getAllCustomerServiceUsersSocketSubscription?.unsubscribe()
+        this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+        this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid}/get_all_customer_service_users`);
+        this.stompClient.disconnect();
+      }
+      sessionStorage.removeItem("userObject");
+      sessionStorage.removeItem("customerObject");
+      sessionStorage.removeItem("customerServiceObject");
+      sessionStorage.removeItem("loggedUser");
+      sessionStorage.removeItem("currentConversation")
+      this.userObject=undefined; 
+      this.customerObject=undefined; 
+      this.customerServiceObject=undefined; 
+      this.loggedUser=undefined;
+      this.conversations=undefined;
+      this.currentConversation=undefined
+      this.chat=undefined;
+      this.customerServiceUsers=undefined;
+      this.selectedChat=false;
+      this.displayLoggedUser="";
+      this.currentConversationId=undefined;
+      this.selectedCustomerServiceUser=undefined;
+    }
+
+    cancel():void{
+      this.showConversationsList=true;
+      this.selectedCustomerServiceUser=undefined;
+      this.getAllCustomerServiceUsersSocketSubscription?.unsubscribe()
+      //this.stompClient.unsubscribe(`/user/${this.customerObject?.customerid}/get_all_customer_service_users`);
+      this.showCustomerServiceListUser=false;
+    }
+
+    back():void{
+      if(this.socket && this.stompClient && this.currentConversationId){
+        this.currentConversationSocketSubscription?.unsubscribe();
+        this.stompClient.unsubscribe(`/topic/message_sent/${this.currentConversationId}`);
+        
+      } 
+      this.currentConversationId=undefined;
+      this.currentConversation=undefined
+      this.chat=undefined;
+      this.selectedChat=false;
+      sessionStorage.removeItem("currentConversation");
+    }
+
+    clearConversation():void{
+      this.currentConversationId!=undefined;
+      this.selectedChat=false; 
+      this.currentConversation=undefined;
+    }
+
+    change(event:any):void{
+      this.chatInput=event.target.value
+    }
+
 
     convertDateToString(date:Date | undefined):string | undefined{
       return date?.toString().replace("T", ", ").slice(0,20);

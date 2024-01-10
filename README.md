@@ -38,3 +38,14 @@ Go to folder:
  Build and run the application: 
 
 > `mvn spring-boot:run`
+
+
+# Open files
+
+> Download `documents.zip`
+
+## Files
+
+> `architecture_document.pdf`
+> `business_requirements.pdf`
+> `compliance_assessment.pdf`
